@@ -118,7 +118,7 @@ ticket breakdown will be added inside each phase's own file in a later pass.
 _(Update this section as phases are completed — Claude Code reads this file at the start of every session for context.)_
 
 - [x] Phase 0 — [plan/phase-0-skeleton.md](plan/phase-0-skeleton.md) (branch: `hardware-abstraction-bootstrap`; camera/mic/speaker + config toggles verified on Mac)
-- [ ] Phase 1 — [plan/phase-1-face-detection.md](plan/phase-1-face-detection.md)
+- [x] Phase 1 — [plan/phase-1-face-detection.md](plan/phase-1-face-detection.md) (verified live on Mac: ~345 frames/12s, steady 1-face detection, ~92fps inference)
 - [ ] Phase 2 — [plan/phase-2-face-recognition.md](plan/phase-2-face-recognition.md)
 - [ ] Phase 3 — [plan/phase-3-tts.md](plan/phase-3-tts.md)
 - [ ] Phase 4 — [plan/phase-4-stt-conversation.md](plan/phase-4-stt-conversation.md)
