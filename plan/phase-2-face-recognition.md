@@ -10,9 +10,9 @@ ever land in the repo.
 
 ## Task breakdown
 
-1. Add `face_recognition` (dlib-based) to `python-service` deps; confirm it builds against the
-   Phase 0 Python 3.11 venv on this Mac (dlib compilation is the most likely install snag —
-   `brew install cmake` first if the wheel build fails).
+1. Add `face_recognition` (dlib-based) to `python-service` deps; confirmed it builds cleanly
+   from source against the Phase 0 Python 3.10 venv on this Mac (`cmake` was already available
+   via Homebrew, so no extra install snag in practice).
 2. Define the on-disk training data layout under `data/` (gitignored, per `PLAN.md`'s
    open-source design constraint): `data/training/faces/<person_name>/*.jpg` for raw captured photos,
    `data/training/embeddings/<person_name>.npy` (or one combined `data/training/embeddings/known_faces.pkl`) for
@@ -43,9 +43,18 @@ ever land in the repo.
 10. Threshold tuning pass: capture test sessions in varied lighting for at least 2 trained
     people + yourself as a control "unknown," compare distances, adjust the default threshold in
     `config.example.yaml` based on what actually separates known from unknown on this hardware.
+    **Needs the user** — this means training on real family members' faces, which isn't
+    something to automate; run `recogcore train --capture <name>` / `--build` yourself, then
+    `python scripts/run_face_detection.py` to see live known/unknown labeling.
 11. Tests in `tests/test_recognizer.py`: given a small fixture embeddings dict and hand-crafted
     distance values, assert `identify()` classifies known/unknown correctly at the boundary —
     this tests the classification logic, not the ML model itself.
+12. Added beyond the original plan: `recogcore train --import <name> --source <path>` as an
+    alternative to live capture, for training from photos the user already has. Handles Apple's
+    HEIC/HEIF format (via `pillow-heif`, converted to JPEG) and downscales oversized phone photos
+    (>1600px longest side) before saving, skipping any photo with no detectable face. Lands in
+    the same `data/training/faces/<name>/` tree as live capture, so `--build` works unchanged.
+    Tested in `tests/test_import_photos.py` with synthetic images (no real face photos needed).
 
 ## File/folder layout created by this phase
 
@@ -59,10 +68,14 @@ robot-assistant/
 │           └── known_faces.pkl
 └── python-service/
     ├── tests/
-    │   └── test_recognizer.py
+    │   ├── test_recognizer.py
+    │   └── test_import_photos.py
     └── recog_core/
+        ├── cli.py                 # updated: `recogcore train --capture/--import/--build`
         └── vision/
+            ├── loop.py             # updated: detect → crop → recognize → label
             ├── capture_training_photos.py
+            ├── import_photos.py
             ├── embeddings.py
             └── recognizer.py
 ```

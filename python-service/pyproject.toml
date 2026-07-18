@@ -14,6 +14,10 @@ dependencies = [
     "pyyaml",
     "python-dotenv",
     "mediapipe",
+    "dlib",
+    "face_recognition",
+    "Pillow",
+    "pillow-heif",
 ]
 
 [project.optional-dependencies]

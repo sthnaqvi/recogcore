@@ -22,6 +22,7 @@ def _config(hardware_mode: str, tmp_path) -> Config:
         mic_enabled=True,
         speaker_enabled=True,
         data_dir=tmp_path,
+        recognition_threshold=0.6,
     )
 
 
