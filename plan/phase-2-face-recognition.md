@@ -49,6 +49,12 @@ ever land in the repo.
 11. Tests in `tests/test_recognizer.py`: given a small fixture embeddings dict and hand-crafted
     distance values, assert `identify()` classifies known/unknown correctly at the boundary —
     this tests the classification logic, not the ML model itself.
+12. Added beyond the original plan: `recogcore train --import <name> --source <path>` as an
+    alternative to live capture, for training from photos the user already has. Handles Apple's
+    HEIC/HEIF format (via `pillow-heif`, converted to JPEG) and downscales oversized phone photos
+    (>1600px longest side) before saving, skipping any photo with no detectable face. Lands in
+    the same `data/training/faces/<name>/` tree as live capture, so `--build` works unchanged.
+    Tested in `tests/test_import_photos.py` with synthetic images (no real face photos needed).
 
 ## File/folder layout created by this phase
 
@@ -62,12 +68,14 @@ robot-assistant/
 │           └── known_faces.pkl
 └── python-service/
     ├── tests/
-    │   └── test_recognizer.py
+    │   ├── test_recognizer.py
+    │   └── test_import_photos.py
     └── recog_core/
-        ├── cli.py                 # updated: `recogcore train --capture/--build`
+        ├── cli.py                 # updated: `recogcore train --capture/--import/--build`
         └── vision/
             ├── loop.py             # updated: detect → crop → recognize → label
             ├── capture_training_photos.py
+            ├── import_photos.py
             ├── embeddings.py
             └── recognizer.py
 ```

@@ -16,6 +16,8 @@ dependencies = [
     "mediapipe",
     "dlib",
     "face_recognition",
+    "Pillow",
+    "pillow-heif",
 ]
 
 [project.optional-dependencies]
