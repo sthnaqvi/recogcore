@@ -23,6 +23,9 @@ def _config(hardware_mode: str, tmp_path) -> Config:
         speaker_enabled=True,
         data_dir=tmp_path,
         recognition_threshold=0.6,
+        greeting_known_phrasings=["Hi, {name}!"],
+        greeting_unknown_phrasings=["Hi there!"],
+        greeting_cooldown_seconds=90,
     )
 
 

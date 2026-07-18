@@ -9,11 +9,17 @@ generically, spoken aloud through the Mac speaker via the `HardwareProvider`.
 ## Task breakdown
 
 1. Add `piper-tts` (offline, free, neural — per the original plan) to `python-service` deps.
-   Confirm it runs on this Mac; download the chosen voice model to a models cache directory
-   (not committed — see step 6).
-2. Write `recog_core/audio/tts.py`: `TextToSpeech` class wrapping Piper — `synthesize(text) ->
-   np.ndarray` (raw audio samples) so it composes with `HardwareProvider.play_audio()` rather
-   than each caller shelling out to Piper directly.
+   Confirmed it runs on this Mac; downloaded the `en_US-lessac-medium` voice (~63MB) via Piper's
+   built-in `python -m piper.download_voices` helper into `models/tts/` (gitignored). Note:
+   `piper-tts` itself is GPL-3.0-licensed -- since this repo is MIT, `tts.py` invokes it via
+   `subprocess` (like calling `ffmpeg`) rather than `import piper` directly, keeping a clean
+   license boundary instead of linking a GPL library into an MIT codebase.
+2. Write `recog_core/audio/tts.py`: `TextToSpeech` class wrapping the Piper CLI subprocess --
+   `synthesize(text) -> np.ndarray` (raw float32 PCM via `--output-raw`) so it composes with
+   `HardwareProvider.play_audio()` rather than each caller shelling out to Piper directly. Also
+   adds `AsyncSpeaker`: a single background worker thread + queue so greeting synthesis/playback
+   never blocks the camera loop and multiple greetings never overlap each other (this is the
+   "background thread/queue" from step 5, implemented alongside the TTS wrapper itself).
 3. Write `recog_core/greeting.py`: greeting logic — `build_greeting(recognition_result) -> str`.
    Known person → `"Hi, {name}!"` (or a small rotation of phrasings to avoid sounding robotic
    on every repeat visit); unknown → generic `"Hi there!"`. Keep phrasing templates in config
@@ -43,11 +49,16 @@ generically, spoken aloud through the Mac speaker via the `HardwareProvider`.
 python-service/
 ├── scripts/
 │   └── download_tts_model.sh
+├── models/
+│   └── tts/                      # gitignored -- en_US-lessac-medium.onnx (+ .json config)
 ├── tests/
 │   └── test_greeting.py
 └── recog_core/
-    ├── greeting.py
-    └── audio/
-        ├── __init__.py
-        └── tts.py
+    ├── config.py                  # updated: greetings.known/unknown/cooldown_seconds
+    ├── greeting.py                 # build_greeting() + GreetingCooldown
+    ├── audio/
+    │   ├── __init__.py
+    │   └── tts.py                  # TextToSpeech + AsyncSpeaker
+    └── vision/
+        └── loop.py                 # updated: recognize → cooldown check → speak
 ```

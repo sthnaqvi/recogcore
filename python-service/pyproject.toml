@@ -18,6 +18,7 @@ dependencies = [
     "face_recognition",
     "Pillow",
     "pillow-heif",
+    "piper-tts",
 ]
 
 [project.optional-dependencies]

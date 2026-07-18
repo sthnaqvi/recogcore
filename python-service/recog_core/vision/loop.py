@@ -6,7 +6,9 @@ import time
 import cv2
 import numpy as np
 
+from recog_core.audio.tts import AsyncSpeaker, TextToSpeech
 from recog_core.config import load_config
+from recog_core.greeting import GreetingCooldown, build_greeting
 from recog_core.provider_factory import get_provider
 from recog_core.vision.embeddings import generate_embedding
 from recog_core.vision.face_detector import BoundingBox, FaceDetector
@@ -27,13 +29,26 @@ def _crop_face(frame: np.ndarray, box: BoundingBox, padding: float = 0.2) -> np.
     return frame[y1:y2, x1:x2]
 
 
+def _make_speaker(config, provider) -> AsyncSpeaker | None:
+    if not provider.is_speaker_enabled():
+        return None
+    try:
+        tts = TextToSpeech()
+    except FileNotFoundError as exc:
+        print(f"Greeting speech disabled: {exc}")
+        return None
+    return AsyncSpeaker(tts, provider.play_audio)
+
+
 def run(headless: bool = False) -> None:
     config = load_config()
     provider = get_provider(config)
     detector = FaceDetector()
     embeddings_path = config.data_dir / "training" / "embeddings" / "known_faces.pkl"
     recognizer = Recognizer(embeddings_path, threshold=config.recognition_threshold)
+    cooldown = GreetingCooldown(config.greeting_cooldown_seconds)
     provider.start()
+    speaker = _make_speaker(config, provider)
 
     if not recognizer.has_known_faces():
         print("No trained faces yet -- every face will show as 'Unknown'.")
@@ -60,6 +75,13 @@ def run(headless: bool = False) -> None:
                         color = KNOWN_COLOR if result.is_known else UNKNOWN_COLOR
                         label = f"{result.name} ({result.confidence:.2f})"
 
+                        if speaker is not None and cooldown.should_greet(result.name):
+                            cooldown.mark_greeted(result.name)
+                            text = build_greeting(
+                                result, config.greeting_known_phrasings, config.greeting_unknown_phrasings
+                            )
+                            speaker.speak(text)
+
                 cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), color, 2)
                 cv2.putText(
                     frame, label, (box.x, max(box.y - 10, 0)),
@@ -85,7 +107,7 @@ def run(headless: bool = False) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Face detection + recognition loop")
+    parser = argparse.ArgumentParser(description="Face detection + recognition + greeting loop")
     parser.add_argument("--headless", action="store_true", help="run without a preview window")
     args = parser.parse_args()
     run(headless=args.headless)

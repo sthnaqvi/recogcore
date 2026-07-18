@@ -10,6 +10,10 @@ from dotenv import load_dotenv
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+DEFAULT_KNOWN_GREETINGS = ["Hi, {name}!", "Welcome back, {name}!", "Hey {name}, good to see you!"]
+DEFAULT_UNKNOWN_GREETINGS = ["Hi there!", "Hello!"]
+
+
 @dataclass
 class Config:
     hardware_mode: str
@@ -18,6 +22,9 @@ class Config:
     speaker_enabled: bool
     data_dir: Path
     recognition_threshold: float
+    greeting_known_phrasings: list[str]
+    greeting_unknown_phrasings: list[str]
+    greeting_cooldown_seconds: float
 
 
 def load_config() -> Config:
@@ -32,6 +39,7 @@ def load_config() -> Config:
 
     hardware = raw.get("hardware", {})
     recognition = raw.get("recognition", {})
+    greetings = raw.get("greetings", {})
     return Config(
         hardware_mode=os.environ.get("HARDWARE_MODE", hardware.get("mode", "mac")),
         camera_enabled=hardware.get("camera_enabled", True),
@@ -39,4 +47,7 @@ def load_config() -> Config:
         speaker_enabled=hardware.get("speaker_enabled", True),
         data_dir=REPO_ROOT / "data",
         recognition_threshold=recognition.get("threshold", 0.6),
+        greeting_known_phrasings=greetings.get("known", DEFAULT_KNOWN_GREETINGS),
+        greeting_unknown_phrasings=greetings.get("unknown", DEFAULT_UNKNOWN_GREETINGS),
+        greeting_cooldown_seconds=greetings.get("cooldown_seconds", 90),
     )

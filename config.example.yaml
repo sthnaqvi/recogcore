@@ -6,3 +6,13 @@ hardware:
 
 recognition:
   threshold: 0.6   # euclidean distance; lower = stricter match. Tune per-install.
+
+greetings:
+  known:
+    - "Hi, {name}!"
+    - "Welcome back, {name}!"
+    - "Hey {name}, good to see you!"
+  unknown:
+    - "Hi there!"
+    - "Hello!"
+  cooldown_seconds: 90   # don't re-greet the same person (or "unknown") more often than this
