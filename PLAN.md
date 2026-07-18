@@ -119,8 +119,8 @@ _(Update this section as phases are completed — Claude Code reads this file at
 
 - [x] Phase 0 — [plan/phase-0-skeleton.md](plan/phase-0-skeleton.md) (branch: `hardware-abstraction-bootstrap`; camera/mic/speaker + config toggles verified on Mac)
 - [x] Phase 1 — [plan/phase-1-face-detection.md](plan/phase-1-face-detection.md) (verified live on Mac: ~345 frames/12s, steady 1-face detection, ~92fps inference)
-- [ ] Phase 2 — [plan/phase-2-face-recognition.md](plan/phase-2-face-recognition.md)
-- [ ] Phase 3 — [plan/phase-3-tts.md](plan/phase-3-tts.md)
+- [x] Phase 2 — [plan/phase-2-face-recognition.md](plan/phase-2-face-recognition.md) (merged via PR; live+import training verified on real family faces)
+- [x] Phase 3 — [plan/phase-3-tts.md](plan/phase-3-tts.md) (known-person greeting verified live on Mac; unknown-face greeting and re-greet cooldown not yet manually confirmed)
 - [ ] Phase 4 — [plan/phase-4-stt-conversation.md](plan/phase-4-stt-conversation.md)
 - [ ] Phase 5 — [plan/phase-5-logging-backend.md](plan/phase-5-logging-backend.md)
 - [ ] Phase 6 — [plan/phase-6-integration-testing.md](plan/phase-6-integration-testing.md)
