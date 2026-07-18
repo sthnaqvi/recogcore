@@ -1,0 +1,18 @@
+# Local/private runtime state — never commit anyone's personal data
+data/training/
+data/runtime/
+config.yaml
+.env
+*.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# OS / editor
+.DS_Store
+*.log
