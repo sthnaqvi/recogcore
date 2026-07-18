@@ -4,20 +4,40 @@ import argparse
 import time
 
 import cv2
+import numpy as np
 
 from recog_core.config import load_config
 from recog_core.provider_factory import get_provider
-from recog_core.vision.face_detector import FaceDetector
+from recog_core.vision.embeddings import generate_embedding
+from recog_core.vision.face_detector import BoundingBox, FaceDetector
+from recog_core.vision.recognizer import Recognizer
 
 WINDOW_NAME = "RecogCore -- Face Detection"
 FPS_WINDOW = 30
+KNOWN_COLOR = (0, 255, 0)
+UNKNOWN_COLOR = (0, 165, 255)
+
+
+def _crop_face(frame: np.ndarray, box: BoundingBox, padding: float = 0.2) -> np.ndarray:
+    h, w = frame.shape[:2]
+    pad_x = int(box.w * padding)
+    pad_y = int(box.h * padding)
+    x1, y1 = max(box.x - pad_x, 0), max(box.y - pad_y, 0)
+    x2, y2 = min(box.x + box.w + pad_x, w), min(box.y + box.h + pad_y, h)
+    return frame[y1:y2, x1:x2]
 
 
 def run(headless: bool = False) -> None:
     config = load_config()
     provider = get_provider(config)
     detector = FaceDetector()
+    embeddings_path = config.data_dir / "training" / "embeddings" / "known_faces.pkl"
+    recognizer = Recognizer(embeddings_path, threshold=config.recognition_threshold)
     provider.start()
+
+    if not recognizer.has_known_faces():
+        print("No trained faces yet -- every face will show as 'Unknown'.")
+        print("Run `recogcore train --capture <name>` then `recogcore train --build` to train.")
 
     frame_times: list[float] = []
     try:
@@ -29,16 +49,26 @@ def run(headless: bool = False) -> None:
 
             start = time.time()
             boxes = detector.detect(frame)
+
+            for box in boxes:
+                crop = _crop_face(frame, box)
+                label, color = "Unknown", UNKNOWN_COLOR
+                if crop.size > 0:
+                    embedding = generate_embedding(crop)
+                    if embedding is not None:
+                        result = recognizer.identify(embedding)
+                        color = KNOWN_COLOR if result.is_known else UNKNOWN_COLOR
+                        label = f"{result.name} ({result.confidence:.2f})"
+
+                cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), color, 2)
+                cv2.putText(
+                    frame, label, (box.x, max(box.y - 10, 0)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1,
+                )
+
             frame_times.append(time.time() - start)
             frame_times = frame_times[-FPS_WINDOW:]
             fps = 1.0 / (sum(frame_times) / len(frame_times)) if frame_times else 0.0
-
-            for box in boxes:
-                cv2.rectangle(frame, (box.x, box.y), (box.x + box.w, box.y + box.h), (0, 255, 0), 2)
-                cv2.putText(
-                    frame, f"{box.confidence:.2f}", (box.x, max(box.y - 10, 0)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1,
-                )
             cv2.putText(frame, f"FPS: {fps:.1f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
             if headless:
@@ -55,7 +85,7 @@ def run(headless: bool = False) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Phase 1 face detection loop")
+    parser = argparse.ArgumentParser(description="Face detection + recognition loop")
     parser.add_argument("--headless", action="store_true", help="run without a preview window")
     args = parser.parse_args()
     run(headless=args.headless)

@@ -3,3 +3,6 @@ hardware:
   camera_enabled: true
   mic_enabled: true
   speaker_enabled: true
+
+recognition:
+  threshold: 0.6   # euclidean distance; lower = stricter match. Tune per-install.

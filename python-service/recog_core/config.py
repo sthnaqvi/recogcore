@@ -17,6 +17,7 @@ class Config:
     mic_enabled: bool
     speaker_enabled: bool
     data_dir: Path
+    recognition_threshold: float
 
 
 def load_config() -> Config:
@@ -30,10 +31,12 @@ def load_config() -> Config:
         raw = yaml.safe_load(f) or {}
 
     hardware = raw.get("hardware", {})
+    recognition = raw.get("recognition", {})
     return Config(
         hardware_mode=os.environ.get("HARDWARE_MODE", hardware.get("mode", "mac")),
         camera_enabled=hardware.get("camera_enabled", True),
         mic_enabled=hardware.get("mic_enabled", True),
         speaker_enabled=hardware.get("speaker_enabled", True),
         data_dir=REPO_ROOT / "data",
+        recognition_threshold=recognition.get("threshold", 0.6),
     )
