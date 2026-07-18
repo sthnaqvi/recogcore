@@ -1,0 +1,5 @@
+hardware:
+  mode: mac        # mac | pi
+  camera_enabled: true
+  mic_enabled: true
+  speaker_enabled: true

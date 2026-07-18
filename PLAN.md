@@ -117,7 +117,7 @@ ticket breakdown will be added inside each phase's own file in a later pass.
 ## Progress Log
 _(Update this section as phases are completed — Claude Code reads this file at the start of every session for context.)_
 
-- [ ] Phase 0 — [plan/phase-0-skeleton.md](plan/phase-0-skeleton.md)
+- [x] Phase 0 — [plan/phase-0-skeleton.md](plan/phase-0-skeleton.md) (branch: `hardware-abstraction-bootstrap`; camera/mic/speaker + config toggles verified on Mac)
 - [ ] Phase 1 — [plan/phase-1-face-detection.md](plan/phase-1-face-detection.md)
 - [ ] Phase 2 — [plan/phase-2-face-recognition.md](plan/phase-2-face-recognition.md)
 - [ ] Phase 3 — [plan/phase-3-tts.md](plan/phase-3-tts.md)
