@@ -11,6 +11,9 @@ __pycache__/
 *.pyc
 *.egg-info/
 
+# Downloaded ML models -- fetched via scripts/download_*.sh, not committed
+python-service/models/
+
 # Node
 node_modules/
 

@@ -13,6 +13,7 @@ dependencies = [
     "numpy",
     "pyyaml",
     "python-dotenv",
+    "mediapipe",
 ]
 
 [project.optional-dependencies]
