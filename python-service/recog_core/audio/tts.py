@@ -63,5 +63,8 @@ class AsyncSpeaker:
     def _worker(self) -> None:
         while True:
             text = self._queue.get()
-            samples = self._tts.synthesize(text)
-            self._play_audio(samples, self._tts.samplerate)
+            try:
+                samples = self._tts.synthesize(text)
+                self._play_audio(samples, self._tts.samplerate)
+            except Exception as exc:  # noqa: BLE001 -- one bad synthesis must not kill all future greetings
+                print(f"Greeting speech failed for {text!r}: {exc}")

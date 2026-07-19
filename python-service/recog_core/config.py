@@ -25,6 +25,10 @@ class Config:
     greeting_known_phrasings: list[str]
     greeting_unknown_phrasings: list[str]
     greeting_cooldown_seconds: float
+    stt_engine: str
+    conversation_mode: str
+    conversation_max_turns: int
+    conversation_listen_seconds: float
 
 
 def load_config() -> Config:
@@ -40,6 +44,8 @@ def load_config() -> Config:
     hardware = raw.get("hardware", {})
     recognition = raw.get("recognition", {})
     greetings = raw.get("greetings", {})
+    stt = raw.get("stt", {})
+    conversation = raw.get("conversation", {})
     return Config(
         hardware_mode=os.environ.get("HARDWARE_MODE", hardware.get("mode", "mac")),
         camera_enabled=hardware.get("camera_enabled", True),
@@ -50,4 +56,8 @@ def load_config() -> Config:
         greeting_known_phrasings=greetings.get("known", DEFAULT_KNOWN_GREETINGS),
         greeting_unknown_phrasings=greetings.get("unknown", DEFAULT_UNKNOWN_GREETINGS),
         greeting_cooldown_seconds=greetings.get("cooldown_seconds", 90),
+        stt_engine=stt.get("engine", "vosk"),
+        conversation_mode=conversation.get("mode", "rules"),
+        conversation_max_turns=conversation.get("max_turns", 3),
+        conversation_listen_seconds=conversation.get("listen_seconds", 5.0),
     )

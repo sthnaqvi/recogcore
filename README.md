@@ -8,10 +8,15 @@ so core logic never changes between the two.
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
-![Status: Phase 2 of 11](https://img.shields.io/badge/status-phase%202%20of%2011-orange)
+![Status: Phase 4 of 11](https://img.shields.io/badge/status-phase%204%20of%2011-orange)
+
+**→ [HOW_IT_WORKS.md](HOW_IT_WORKS.md)** — a one-page, high-level breakdown of exactly which
+library/model/method powers each capability (face detection, recognition, TTS, STT,
+conversation), without diving into source code.
 
 ## Contents
 
+- [How it works](HOW_IT_WORKS.md)
 - [Features](#features)
 - [Project status](#project-status)
 - [Architecture](#architecture)
@@ -19,6 +24,8 @@ so core logic never changes between the two.
 - [Live face detection](#live-face-detection)
 - [Training your own faces](#training-your-own-faces)
 - [How recognition works, and tuning the threshold](#how-recognition-works-and-tuning-the-threshold)
+- [Spoken greetings](#spoken-greetings)
+- [Two-way conversation](#two-way-conversation)
 - [Tests](#tests)
 - [Privacy by design](#privacy-by-design)
 - [Contributing](#contributing)
@@ -31,13 +38,17 @@ so core logic never changes between the two.
   confidence threshold
 - Train from live camera capture **or** from photos you already have — including Apple's
   HEIC/HEIF format and oversized phone photos, handled automatically
+- Spoken greetings (Piper TTS) — known people get greeted by name, strangers get a generic hello,
+  with a per-person cooldown so nobody gets re-greeted every frame
+- Two-way conversation — listens after greeting, transcribes speech (Vosk or Whisper), and
+  responds via fast rule-based intents or an optional LLM (Claude) fallback for open-ended chat
 - Hardware abstraction layer (`HardwareProvider`) so the same recognition/greeting/conversation
   logic runs unchanged on a Mac during development and a Raspberry Pi in deployment
 - Every person's data lives in a gitignored `data/` tree, fully separated from the codebase — see
   [Privacy by design](#privacy-by-design)
 
-Two-way conversation, TTS greetings, entry/exit logging, and a Pi deployment are planned next —
-see [Project status](#project-status) and [PLAN.md](PLAN.md).
+Entry/exit logging and a Pi deployment are planned next — see [Project status](#project-status)
+and [PLAN.md](PLAN.md).
 
 ## Project status
 
@@ -49,8 +60,8 @@ and hour estimates.
 | 0 — Project skeleton + hardware abstraction layer | ✅ Done |
 | 1 — Face detection on Mac | ✅ Done |
 | 2 — Face recognition + training | ✅ Done |
-| 3 — TTS / speaking | ⬜ Not started |
-| 4 — STT + two-way conversation | ⬜ Not started |
+| 3 — TTS / speaking | ✅ Done |
+| 4 — STT + two-way conversation | ✅ Done |
 | 5 — Metadata logging backend | ⬜ Not started |
 | 6 — End-to-end integration + testing on Mac | ⬜ Not started |
 | 7 — Optional dashboard | ⬜ Not started |
@@ -184,6 +195,42 @@ To tune it for your setup:
 4. Edit `recognition.threshold` in your local `config.yaml` — not `config.example.yaml`, unless
    you're deliberately changing the shipped default for everyone who clones this repo.
 
+## Spoken greetings
+
+```bash
+cd python-service
+source .venv/bin/activate
+python -m piper.download_voices en_US-lessac-medium --download-dir models/tts   # one-time, ~63MB
+python scripts/run_face_detection.py
+```
+Recognized faces now get a spoken greeting (a random pick from `greetings.known` in
+`config.yaml`, e.g. "Hi, {name}!"); unknown faces get a generic one (`greetings.unknown`). The
+same person won't be re-greeted more than once per `greetings.cooldown_seconds` (default 90s).
+
+Piper (the TTS engine) is GPL-3.0 licensed; `recog_core/audio/tts.py` invokes it as a subprocess
+rather than importing it as a library, keeping a clean license boundary from this MIT repo.
+
+## Two-way conversation
+
+```bash
+cd python-service
+source .venv/bin/activate
+./scripts/download_stt_model.sh   # one-time: fetches the Vosk model (~41MB), not committed
+python scripts/run_conversation_demo.py
+```
+After the greeting, it listens for up to `conversation.listen_seconds` (default 5s), transcribes
+what you said, and replies — then repeats for up to `conversation.max_turns` (default 3) or until
+you stop talking. Two response modes, set via `config.yaml: conversation.mode`:
+
+- **`rules`** (default) — a small set of keyword-matched intents (e.g. "how are you," "goodbye")
+  with canned replies. Free, instant, deterministic.
+- **`llm`** — falls through to Claude for anything the rules don't cover. Requires
+  `ANTHROPIC_API_KEY` in your `.env` (never committed, never logged).
+
+STT engine is set via `config.yaml: stt.engine`:
+- **`vosk`** (default) — fully offline, never touches the network after the one-time model download.
+- **`whisper`** — better accuracy, but downloads its model from Hugging Face Hub on first use.
+
 ## Tests
 
 ```bash
@@ -204,7 +251,7 @@ itself must never contain anyone's personal data. Concretely:
   DB files, logs). Both are gitignored entirely.
 - `config.yaml` and `.env` (your real settings/secrets) are gitignored; only the placeholder
   `config.example.yaml` / `.env.example` are committed.
-- ML models (face detection, and later TTS) are fetched via download scripts at setup time, not
+- ML models (face detection, TTS, STT) are fetched via download scripts at setup time, not
   committed to the repo.
 - The test suite is built entirely on synthetic data (blank frames, random noise, hand-crafted
   vectors) — no real face photo has ever been or will be committed to this repo.

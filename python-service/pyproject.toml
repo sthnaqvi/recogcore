@@ -19,6 +19,9 @@ dependencies = [
     "Pillow",
     "pillow-heif",
     "piper-tts",
+    "vosk",
+    "faster-whisper",
+    "anthropic",
 ]
 
 [project.optional-dependencies]

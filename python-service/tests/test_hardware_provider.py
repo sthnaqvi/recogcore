@@ -26,6 +26,10 @@ def _config(hardware_mode: str, tmp_path) -> Config:
         greeting_known_phrasings=["Hi, {name}!"],
         greeting_unknown_phrasings=["Hi there!"],
         greeting_cooldown_seconds=90,
+        stt_engine="vosk",
+        conversation_mode="rules",
+        conversation_max_turns=3,
+        conversation_listen_seconds=5.0,
     )
 
 

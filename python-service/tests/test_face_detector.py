@@ -1,11 +1,16 @@
 import numpy as np
 import pytest
 
-from recog_core.vision.face_detector import BoundingBox, FaceDetector
+from recog_core.vision.face_detector import DEFAULT_MODEL_PATH, BoundingBox, FaceDetector
 
 
 @pytest.fixture(scope="module")
 def detector():
+    if not DEFAULT_MODEL_PATH.exists():
+        pytest.skip(
+            f"Face detection model not found at {DEFAULT_MODEL_PATH} -- "
+            "run scripts/download_face_model.sh first."
+        )
     d = FaceDetector()
     yield d
     d.close()
