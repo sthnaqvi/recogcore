@@ -16,3 +16,11 @@ greetings:
     - "Hi there!"
     - "Hello!"
   cooldown_seconds: 90   # don't re-greet the same person (or "unknown") more often than this
+
+stt:
+  engine: vosk     # vosk (fully offline) | whisper (better accuracy, downloads a model via HF Hub once)
+
+conversation:
+  mode: rules      # rules (free, canned responses) | llm (falls through to Claude for open-ended replies)
+  max_turns: 3     # hard cap on back-and-forth turns per conversation
+  listen_seconds: 5.0

@@ -1,7 +1,8 @@
 # RecogCore — Home Robot Assistant — Project Plan
 
 > Project name: **RecogCore** — the recognition engine at the center of the system (Python
-> package: `recog_core`; CLI: `recogcore`).
+> package: `recog_core`; CLI: `recogcore`). See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for the
+> current bugs/improvements backlog from the code-review pass after Phase 4.
 
 ## Goal
 
