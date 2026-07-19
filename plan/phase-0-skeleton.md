@@ -29,6 +29,14 @@ released cleanly through the abstraction, with config-driven enable/disable per 
 6. Implement `MacProvider(HardwareProvider)` in `recog_core/hardware/mac_provider.py`:
    `cv2.VideoCapture(0)` for camera, `sounddevice` for mic input, and system speaker output
    (start with `sounddevice`/`afplay`-based playback so no extra dep is needed).
+   **Hardened after real bug reports during Phase 2/3 live testing** (see
+   `../KNOWN_ISSUES.md` for full root-cause detail): camera now capped at 1280x720 via
+   `cv2.CAP_PROP_FRAME_WIDTH/HEIGHT` (was defaulting to the webcam's native 1080p+, which made
+   downstream recognition too slow to feel smooth); `play_audio()` now resamples incoming audio
+   to the output device's actual native sample rate (queried via `sounddevice`, e.g. 48000Hz on
+   this Mac) using `scipy.signal.resample_poly`, clips any filter-ringing overshoot back into
+   valid PCM range, and applies an 8ms fade-in/out per clip — all because playing TTS audio
+   (22050Hz) straight through at the wrong assumed rate was causing audible distortion.
 7. Implement a `NullProvider` (or per-module null objects) so camera/mic/speaker can each be
    individually disabled via config without special-casing call sites — every call site just
    asks the provider, which no-ops if that module is off.

@@ -7,12 +7,23 @@ import face_recognition
 import numpy as np
 
 
-def generate_embedding(face_image: np.ndarray) -> np.ndarray | None:
-    """`face_image` is a BGR image (OpenCV convention) containing a single face -- either a
-    tight crop from the live detector or a full training photo. Returns None if no face is
-    found in it."""
+def generate_embedding(
+    face_image: np.ndarray, face_location: tuple[int, int, int, int] | None = None
+) -> np.ndarray | None:
+    """`face_image` is a BGR image (OpenCV convention) containing a single face. Returns None
+    if no face is found in it.
+
+    `face_location` is an optional (top, right, bottom, left) box of the face *within*
+    `face_image`. When the caller already located the face (the live loop, via MediaPipe),
+    passing that tight box skips dlib's own redundant face-detection pass (~3-4x faster per
+    call) while still letting dlib run its landmark alignment on a tight box -- the same
+    alignment the training photos get (where dlib detects the face itself), so live and
+    training embeddings stay directly comparable. An earlier version passed the whole padded
+    crop as the location, which subtly misaligned live embeddings relative to training ones.
+    When `face_location` is None, dlib detects the face itself (slower, used off the hot path)."""
     rgb = np.ascontiguousarray(face_image[:, :, ::-1])
-    encodings = face_recognition.face_encodings(rgb)
+    locations = [face_location] if face_location is not None else None
+    encodings = face_recognition.face_encodings(rgb, known_face_locations=locations)
     return encodings[0] if encodings else None
 
 

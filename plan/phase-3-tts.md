@@ -20,6 +20,13 @@ generically, spoken aloud through the Mac speaker via the `HardwareProvider`.
    adds `AsyncSpeaker`: a single background worker thread + queue so greeting synthesis/playback
    never blocks the camera loop and multiple greetings never overlap each other (this is the
    "background thread/queue" from step 5, implemented alongside the TTS wrapper itself).
+   **Updated after user reports of distorted, wrong-speed playback** (full root-cause writeup in
+   `../KNOWN_ISSUES.md`): added `length_scale` (Piper's phoneme-duration control) as a
+   `config.yaml: tts.length_scale` setting so pacing is tunable without a code change, and fixed
+   three compounding audio-quality bugs in `MacProvider.play_audio()` (Phase 0's file) --
+   playback at the wrong sample rate, a crude resampling method, and unclipped filter-ringing
+   overshoot. The TTS synthesis itself was never the problem; every fix was in how the resulting
+   audio got played back.
 3. Write `recog_core/greeting.py`: greeting logic — `build_greeting(recognition_result) -> str`.
    Known person → `"Hi, {name}!"` (or a small rotation of phrasings to avoid sounding robotic
    on every repeat visit); unknown → generic `"Hi there!"`. Keep phrasing templates in config

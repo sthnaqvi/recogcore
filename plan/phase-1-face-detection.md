@@ -28,6 +28,11 @@ recognition (who is it) yet — just "is there a face, and where."
 4. Write `recog_core/vision/loop.py`: the capture loop — pulls frames from the
    `HardwareProvider`, runs `face_detector.detect()`, draws boxes via `cv2.rectangle` +
    confidence text, shows a preview window (`cv2.imshow`) for manual dev testing.
+   **Updated after a user-reported lag bug once Phase 2/3 added recognition+greeting on top**
+   (see `../KNOWN_ISSUES.md`): the expensive recognition step (crop → embed → identify) now only
+   runs every 5th frame, reusing the previous frame's label/color in between — detection and
+   drawing still run every frame, so it still looks smooth, but the costly step doesn't run at
+   full camera frame rate.
 5. Add FPS measurement: rolling average over the last N frames, printed/overlaid on the preview
    window, so Phase 6 has a baseline to compare Pi performance against later.
 6. Add a `--headless` flag/config option to run the loop without `cv2.imshow` (needed once this

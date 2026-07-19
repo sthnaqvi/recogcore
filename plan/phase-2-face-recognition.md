@@ -23,6 +23,13 @@ ever land in the repo.
 4. Write `recog_core/vision/embeddings.py`: `generate_embedding(image) -> np.ndarray` (wraps
    `face_recognition.face_encodings`), plus `build_known_faces_db(data_dir) -> dict[str,
    list[np.ndarray]]` that walks `data/training/faces/*/` and produces/saves the embeddings file.
+   **Fixed after a user-reported lag bug** (see `../KNOWN_ISSUES.md`): `generate_embedding()`
+   was calling `face_encodings()` without `known_face_locations`, so it silently re-ran dlib's
+   own HOG face detector on every already-cropped face on every live-loop frame (~30ms/call).
+   Now passes the crop's own coordinates explicitly, skipping the redundant re-detection
+   (~30ms → ~8ms/call) — this, plus capping camera resolution (Phase 0) and throttling how often
+   the live loop re-runs recognition (Phase 1's `loop.py`), fixed a real "video is very laggy"
+   report.
 5. Wire `recogcore train --build` (or fold into the same command) to run
    `build_known_faces_db` and write `data/training/embeddings/known_faces.pkl` — this is the actual
    `recogcore-train` console entry point stubbed in Phase 0.
@@ -30,6 +37,14 @@ ever land in the repo.
    once, exposes `identify(face_embedding) -> RecognitionResult` (`name`, `is_known: bool`,
    `confidence: float`), comparing via `face_recognition.face_distance` (or cosine distance if
    switching libraries later).
+   **Hardened after user-reported misidentification bugs in multi-person live testing** (full
+   root-cause writeup in `../KNOWN_ISSUES.md`): per-person distance is now the mean of the
+   top-3 closest training photos (not the single min), an ambiguity margin
+   (`recognition.ambiguity_margin`) rejects near-ties between two trained people instead of
+   guessing, `identify_all()` enforces one-person-one-face per frame, and greetings only fire
+   after the same identity is stable across consecutive recognition passes
+   (`greetings.stable_recognitions`). Default threshold tightened 0.6 → 0.5 — kids' faces
+   cluster much closer together than adults' under dlib's encoder.
 7. Make the known/unknown threshold a **config value**, not hardcoded (`config.yaml:
    recognition.threshold`, default ~0.6 euclidean distance per the original plan) — this is the
    knob that gets tuned per-install since it's sensitive to camera/lighting, and must not require

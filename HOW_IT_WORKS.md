@@ -60,10 +60,14 @@ has no concept of identity — it just says "there's a face at (x, y)."
    runs on every training photo of every person, and the results are saved to
    `data/training/embeddings/known_faces.pkl`.
 4. At recognition time, `Recognizer.identify()` measures the **Euclidean distance**
-   (`face_recognition.face_distance()`) between the live embedding and every saved one, and picks
-   the closest match.
-5. If that closest distance is at or below `recognition.threshold` (config-driven, default 0.6),
-   it's a match — otherwise, "Unknown."
+   (`face_recognition.face_distance()`) between the live embedding and every saved one, and
+   scores each trained person by their few best-matching photos.
+5. It's a match only if the best person is at or below `recognition.threshold` (config-driven,
+   default 0.5) **and** clearly beats the second-best person (`recognition.ambiguity_margin`) —
+   a near-tie between two family members reads as "Unknown" rather than a guess. One trained
+   person can also only be assigned to one face per frame.
+6. A greeting only fires once the same identity has held steady across several consecutive
+   recognition passes (`greetings.stable_recognitions`) — a single misread frame never speaks.
 
 That's the entire trick: encode two faces into two vectors, measure how far apart the vectors
 are, and threshold the distance. Nothing in this project trains or fine-tunes a model — `dlib`'s

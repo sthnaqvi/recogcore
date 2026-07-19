@@ -26,7 +26,7 @@ def main() -> None:
     provider.start()
 
     print(f"STT engine: {config.stt_engine}  |  conversation mode: {config.conversation_mode}")
-    tts = TextToSpeech()
+    tts = TextToSpeech(length_scale=config.tts_length_scale)
     stt = get_stt(config.stt_engine)
 
     try:
