@@ -5,7 +5,11 @@ hardware:
   speaker_enabled: true
 
 recognition:
-  threshold: 0.6   # euclidean distance; lower = stricter match. Tune per-install.
+  threshold: 0.5         # euclidean distance; lower = stricter match. Tune per-install.
+                         # Families with young children usually need this stricter -- the face
+                         # encoder is trained mostly on adults, so kids' faces cluster together.
+  ambiguity_margin: 0.05 # if the two closest trained people are within this distance of each
+                         # other, report "unknown" instead of guessing between them
 
 greetings:
   known:
@@ -15,7 +19,12 @@ greetings:
   unknown:
     - "Hi there!"
     - "Hello!"
-  cooldown_seconds: 90   # don't re-greet the same person (or "unknown") more often than this
+  cooldown_seconds: 90    # don't re-greet the same person (or "unknown") more often than this
+  stable_recognitions: 3  # same identity must be seen this many recognition passes in a row
+                          # before being greeted -- stops one misclassified frame firing a greeting
+
+tts:
+  length_scale: 1.0   # Piper phoneme-duration scale; >1.0 = slower/more natural-paced, <1.0 = faster
 
 stt:
   engine: vosk     # vosk (fully offline) | whisper (better accuracy, downloads a model via HF Hub once)

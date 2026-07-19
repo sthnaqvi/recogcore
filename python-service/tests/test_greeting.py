@@ -1,4 +1,4 @@
-from recog_core.greeting import GreetingCooldown, build_greeting
+from recog_core.greeting import GreetingCooldown, GreetingStabilizer, build_greeting
 from recog_core.vision.recognizer import RecognitionResult
 
 
@@ -71,3 +71,58 @@ def test_cooldown_shares_one_key_for_all_unknown_faces():
     clock.now += 10
 
     assert cooldown.should_greet("unknown") is False
+
+
+def test_stabilizer_requires_consecutive_passes_before_stable():
+    stabilizer = GreetingStabilizer(required_consecutive=3)
+
+    assert stabilizer.observe({"Alice"}) == set()
+    assert stabilizer.observe({"Alice"}) == set()
+    assert stabilizer.observe({"Alice"}) == {"Alice"}
+
+
+def test_stabilizer_one_pass_flicker_never_becomes_stable():
+    # The exact bug from live testing: one person flickering across several identities.
+    # None of the flickers should ever reach stability.
+    stabilizer = GreetingStabilizer(required_consecutive=3)
+
+    assert stabilizer.observe({"Tauseef"}) == set()
+    assert stabilizer.observe({"Afsha"}) == set()
+    assert stabilizer.observe({"Jazib"}) == set()
+    assert stabilizer.observe({"unknown"}) == set()
+
+
+def test_stabilizer_resets_streak_when_identity_disappears_for_a_pass():
+    stabilizer = GreetingStabilizer(required_consecutive=3)
+
+    stabilizer.observe({"Alice"})
+    stabilizer.observe({"Alice"})
+    stabilizer.observe(set())  # Alice missing for one pass -- streak resets
+    assert stabilizer.observe({"Alice"}) == set()
+    assert stabilizer.observe({"Alice"}) == set()
+    assert stabilizer.observe({"Alice"}) == {"Alice"}
+
+
+def test_stabilizer_tracks_multiple_identities_independently():
+    stabilizer = GreetingStabilizer(required_consecutive=2)
+
+    stabilizer.observe({"Alice", "Bob"})
+    assert stabilizer.observe({"Alice", "Bob"}) == {"Alice", "Bob"}
+
+
+def test_stabilizer_stays_stable_while_identity_remains_in_view():
+    stabilizer = GreetingStabilizer(required_consecutive=2)
+
+    stabilizer.observe({"Alice"})
+    assert stabilizer.observe({"Alice"}) == {"Alice"}
+    assert stabilizer.observe({"Alice"}) == {"Alice"}
+
+
+def test_stabilizer_holds_unknown_to_double_the_streak_requirement():
+    stabilizer = GreetingStabilizer(required_consecutive=2)
+
+    # A named identity stabilizes at 2 passes; "unknown" must wait for 2 * 2 = 4.
+    assert stabilizer.observe({"unknown"}) == set()
+    assert stabilizer.observe({"unknown"}) == set()
+    assert stabilizer.observe({"unknown"}) == set()
+    assert stabilizer.observe({"unknown"}) == {"unknown"}

@@ -21,12 +21,13 @@ class TextToSpeech:
     Returns raw float32 PCM samples in [-1, 1] so callers can hand them straight to
     HardwareProvider.play_audio() without knowing anything about Piper."""
 
-    def __init__(self, model_path: Path = DEFAULT_MODEL_PATH) -> None:
+    def __init__(self, model_path: Path = DEFAULT_MODEL_PATH, length_scale: float = 1.0) -> None:
         if not model_path.exists():
             raise FileNotFoundError(
                 f"Piper voice model not found at {model_path}. Run scripts/download_tts_model.sh first."
             )
         self._model_path = model_path
+        self._length_scale = length_scale
 
     @property
     def samplerate(self) -> int:
@@ -34,7 +35,12 @@ class TextToSpeech:
 
     def synthesize(self, text: str) -> np.ndarray:
         result = subprocess.run(
-            [sys.executable, "-m", "piper", "-m", str(self._model_path), "--output-raw"],
+            [
+                sys.executable, "-m", "piper",
+                "-m", str(self._model_path),
+                "--length-scale", str(self._length_scale),
+                "--output-raw",
+            ],
             input=text.encode("utf-8"),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

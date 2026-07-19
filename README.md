@@ -175,14 +175,25 @@ like. To recognize someone, RecogCore measures the **Euclidean distance** betwee
 embedding and every embedding captured during training — the smaller the distance, the more
 alike the two faces are.
 
-`config.yaml`'s `recognition.threshold` (default **0.6**) is the cutoff: if the closest known
+`config.yaml`'s `recognition.threshold` (default **0.5**) is the cutoff: if the closest known
 face is at or below this distance, it's a match; otherwise the person is labeled "Unknown."
+(Distance per person is averaged over the few best-matching training photos, so one odd
+training photo can't decide a match on its own.)
 
-- **Lower threshold** (e.g. 0.5) = stricter matching. Fewer false positives (a stranger mistaken
-  for family), but more false negatives (family occasionally mislabeled as Unknown, especially in
-  bad lighting or extreme angles).
-- **Higher threshold** (e.g. 0.7) = looser matching. Family gets recognized more reliably, but a
-  stranger can occasionally get matched to a family member by mistake.
+- **Lower threshold** (e.g. 0.45) = stricter matching. Fewer false positives (a stranger
+  mistaken for family), but more false negatives (family occasionally mislabeled as Unknown,
+  especially in bad lighting or extreme angles).
+- **Higher threshold** (e.g. 0.6) = looser matching. Family gets recognized more reliably, but a
+  stranger can occasionally get matched to a family member by mistake. Households with young
+  children should stay strict — the underlying face model is trained mostly on adults, so kids'
+  faces look far more alike to it than they do to you.
+
+Two more knobs guard against misidentification:
+- `recognition.ambiguity_margin` (default 0.05) — if the two closest trained people are within
+  this distance of each other, RecogCore says "Unknown" rather than guessing between them.
+- `greetings.stable_recognitions` (default 3) — the same identity must be seen this many
+  recognition passes in a row before a greeting fires, so one misrecognized frame can't
+  trigger a wrong-name greeting.
 
 To tune it for your setup:
 1. Train at least two people (`--capture` / `--build` above).
